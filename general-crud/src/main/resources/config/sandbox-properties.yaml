@@ -1,0 +1,9 @@
+http:
+  host: "0.0.0.0"
+  port: "8081"
+db:
+  host: "SG-MySQLSystemAPI-8555-mysql-master.servers.mongodirector.com"
+  port: "3306"
+  user: "sgroot"
+  password: "V$UxoQy4Ka64xfZg"
+  database: "SpaceXdb" 

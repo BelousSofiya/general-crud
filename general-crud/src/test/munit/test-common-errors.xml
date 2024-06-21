@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="test-common-errors.xml" />
+	
+	<munit:test name="test-db-connectivity" doc:id="f5ccd075-bb87-46f2-9fea-375a57a14884">
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="api-main" />
+			<munit:enable-flow-source value="GetLaunchpadByExternalId:\soapkit-config" />
+			<munit:enable-flow-source value="getLaunchpad" />
+		
+</munit:enable-flow-sources>
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock_select_launchpad_from_db" doc:id="794751a2-4e52-414e-97b0-9be051f22c19" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="0db7aa15-e907-43de-b5aa-f8f67a9c9904" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="DB:CONNECTIVITY" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="Prepair_input_xml" doc:id="48efdf46-a372-477b-8cb3-6dfc285b5a59" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+ns roc http://example.com/rocketservice
+---
+{soapenv#Envelope:
+   {soapenv#Header: "",
+   soapenv#Body:
+      roc#GetLaunchpadByExternalIdRequest:
+         {externalId: "munit_externalId_1"}
+ }}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Request_to_api_main" doc:id="031ba148-de72-4fd3-8aef-6ea891b246b7" config-ref="HTTP_Request_configuration_global" path="/SpaceXdbServiceSoapPort">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Transform_payload_to_java_object" doc:id="e02a441c-f05b-41e0-a57c-d67aeb905f6c" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-equals doc:name="Assert_equals_db_connection_message" doc:id="9f03689b-e106-4bdb-9218-1e06b9beb6e0" actual="#[payload.Envelope.Body.body.Response.message]" expected='#["DB connection is failed"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="test-any-error" doc:id="75a347b3-1898-46bb-9993-b88d445abd4d" >
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="api-main" />
+			<munit:enable-flow-source value="GetLaunchpadByExternalId:\soapkit-config" />
+			<munit:enable-flow-source value="getLaunchpad" />
+		</munit:enable-flow-sources>
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock_select_launchpad_from_db" doc:id="5ae2f99c-4d0b-4e54-995c-50f6f450838f" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="0db7aa15-e907-43de-b5aa-f8f67a9c9904" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="DB:BAD_SQL_SYNTAX" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="Prepair_input_xml" doc:id="c4bfaa5d-bd1b-480b-b874-e3e3a96c76ee" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+ns roc http://example.com/rocketservice
+---
+{soapenv#Envelope:
+   {soapenv#Header: "",
+   soapenv#Body:
+      roc#GetLaunchpadByExternalIdRequest:
+         {externalId: "munit_externalId_1"}
+ }}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Request_to_api_main" doc:id="dd636f42-1eb8-46ec-8b5d-e11a4e4e8567" config-ref="HTTP_Request_configuration_global" path="/SpaceXdbServiceSoapPort">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Transform_payload_to_java_object" doc:id="922c12aa-75df-4e8f-8863-3287a15ad003" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-equals doc:name="Assert_equals_something_went_wrong" doc:id="521992fb-8a7a-4add-871c-4ef47a6ae235" actual="#[payload.Envelope.Body.body.Response.message]" expected='#["Something went wrong"]'/>
+		</munit:validation>
+	</munit:test>
+	
+
+
+
+</mule>

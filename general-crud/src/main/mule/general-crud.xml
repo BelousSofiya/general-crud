@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:xml-module="http://www.mulesoft.org/schema/mule/xml-module" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit-soap="http://www.mulesoft.org/schema/mule/apikit-soap" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/apikit-soap http://www.mulesoft.org/schema/mule/apikit-soap/current/mule-apikit-soap.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/xml-module http://www.mulesoft.org/schema/mule/xml-module/current/mule-xml-module.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+
+ <flow name="api-main">
+        <http:listener config-ref="api-httpListenerConfig-global" path="/SpaceXdbService/SpaceXdbServiceSoapPort" doc:name="Lonely_listener">
+            <http:response statusCode="#[attributes.additionalTransportData.statusCode default 200]">
+                <http:headers><![CDATA[#[attributes.protocolHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[attributes.additionalTransportData.statusCode default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[attributes.protocolHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+		<apikit-soap:router doc:name="SOAP Router" doc:id="0946c0d9-2828-4abc-9374-41a0ffa2f0c6" config-ref="soapkit-config">
+		<apikit-soap:attributes><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+    headers: attributes.headers,
+    method: attributes.method,
+    queryString: attributes.queryString
+ }]]]></apikit-soap:attributes>
+            </apikit-soap:router>
+  </flow>
+   
+    
+    
+    <flow name="GetRocketByExternalId:\soapkit-config">
+        <ee:transform doc:name="Stub">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Fault: {
+            faultcode: "soap:Server",
+            faultstring: "Operation [GetRocketByExternalId:\soapkit-config] not implemented"
+        }
+    } write "application/xml"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="GetPayloadByExternalId:\soapkit-config">
+       <ee:transform doc:name="Stub">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Fault: {
+            faultcode: "soap:Server",
+            faultstring: "Operation [GetPayloadByExternalId:\soapkit-config] not implemented"
+        }
+    } write "application/xml"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="GetLaunchpadByExternalId:\soapkit-config">
+		<flow-ref doc:name="flow _reference_to_get_launchpad" doc:id="ea99b010-e625-4ba5-b024-5fe5934f4eb2" name="getLaunchpad"/>
+    </flow>
+	<flow name="GetLaunchByExternalId:\soapkit-config">
+		<flow-ref doc:name="flow _reference_to_get_launch" doc:id="0e03b807-5f96-43ab-bd5f-288ff6956a47" name="getLaunch"/>
+    </flow>
+    <flow name="CreateLaunchpad:\soapkit-config">
+	<flow-ref doc:name="flow _reference_to_create_launchpad" doc:id="c54d28ed-6fb6-44ef-bdeb-a3ed2ce89243" name="createLauncpad"/>
+    </flow>
+    <flow name="CreateLaunch:\soapkit-config">
+		<flow-ref doc:name="flow _reference_to_create_launch" doc:id="1bada5d7-770e-4e01-8575-610facbb5efd" name="createLaunch"/>
+    </flow>
+    <flow name="CreateRocket:\soapkit-config">
+        <ee:transform doc:name="Stub">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Fault: {
+            faultcode: "soap:Server",
+            faultstring: "Operation [CreateRocket:\soapkit-config] not implemented"
+        }
+    } write "application/xml"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="CreatePayload:\soapkit-config">
+        <ee:transform doc:name="Stub">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Fault: {
+            faultcode: "soap:Server",
+            faultstring: "Operation [CreatePayload:\soapkit-config] not implemented"
+        }
+    } write "application/xml"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="UpdateLaunchpad:\soapkit-config">
+		<flow-ref doc:name="flow _reference_to_update_launchpad" doc:id="b5bde1a5-530e-4048-adb3-f23c2ae3f42a" name="updateLaunchpad"/>
+    </flow>
+    <flow name="UpdateLaunch:\soapkit-config">
+		<flow-ref doc:name="flow _reference_to_update_launch" doc:id="97e109e7-c008-421e-a3b8-a01894cd3ec5" name="updateLaunch"/>
+    </flow>
+    <flow name="UpdateRocket:\soapkit-config">
+       <ee:transform doc:name="Stub">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Fault: {
+            faultcode: "soap:Server",
+            faultstring: "Operation [UpdateRocket:\soapkit-config] not implemented"
+        }
+    } write "application/xml"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="UpdatePayload:\soapkit-config">
+        <ee:transform doc:name="Stub">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Fault: {
+            faultcode: "soap:Server",
+            faultstring: "Operation [UpdatePayload:\soapkit-config] not implemented"
+        }
+    } write "application/xml"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="DeleteRocketByExternalId:\soapkit-config">
+        <ee:transform doc:name="Stub">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Fault: {
+            faultcode: "soap:Server",
+            faultstring: "Operation [DeleteRocketByExternalId:\soapkit-config] not implemented"
+        }
+    } write "application/xml"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="DeletePayloadByExternalId:\soapkit-config">
+        <ee:transform doc:name="Stub">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Fault: {
+            faultcode: "soap:Server",
+            faultstring: "Operation [DeletePayloadByExternalId:\soapkit-config] not implemented"
+        }
+    } write "application/xml"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="DeleteLaunchpadByExternalId:\soapkit-config">
+		<flow-ref doc:name="flow _reference_to_delete_launchpad" doc:id="9c8ec0cd-cee0-40e8-aced-c439ca89a89c" name="deleteLaunchpad"/>
+    </flow>
+    <flow name="DeleteLaunchByExternalId:\soapkit-config">
+		<flow-ref doc:name="flow _reference_to_delete_launch" doc:id="ce2b2936-9a1d-434c-b3e5-bfc255f3c688" name="deleteLaunch"/>
+    </flow>
+</mule>

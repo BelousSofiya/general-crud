@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<error-handler name="global-error-handlerError_Handler" doc:id="c047717b-57d7-4e27-b4f0-0379682ba0e1" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d2dba2d4-eebd-461f-b286-1a2e9dee9266" type="DB:CONNECTIVITY">
+			<logger level="INFO" doc:name="Log_error_type" doc:id="d41063c2-4bd6-4a6c-9d8b-b095d649a3bc" message="#[error.errorType]"/>
+			<ee:transform doc:name="DB_connection_is_failed_message" doc:id="dc088b37-02be-4e13-9f68-d1fdbf3af055" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+ns ns0 http://example.com/rocketservice
+---
+{
+    body: {
+        soap#Response: {
+            message: "DB connection is failed"
+        }
+    }
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-continue>
+		
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="e9956b62-ded5-486e-9a69-0f49632bd4ad" type="VALIDATION:NULL">
+			<logger level="INFO" doc:name="Log_error_type" doc:id="a2a88e32-29bd-4e30-88d8-c1396cc9dc69" message="#[error.errorType]"/>
+			<ee:transform doc:name="ExternalId_is_required_message" doc:id="dfe0118f-5f66-49bb-951e-abdd10de64de">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+ns ns0 http://example.com/rocketservice
+---
+ {   body: {
+        soap#Response: {
+            message: "ExternalId is required!!!"
+        }
+    }
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+				</ee:variables>
+			</ee:transform>
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="471fc8d0-8c2d-4fbb-adae-7c8c2f3488cc" type="XML-MODULE:SCHEMA_NOT_HONOURED">
+			<logger level="INFO" doc:name="Log_error_type" doc:id="4cfe0308-fc5d-42de-a105-a661e6cc3ac7" message="#[error.errorType]"/>
+			<ee:transform doc:name="Input_xml_is_wrong_message" doc:id="b362a4e6-8116-4fd6-b1cc-f00e8763a3ff" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+ns ns0 http://example.com/rocketservice
+---
+{
+    body: {
+        soap#Response: {
+            message: "Your input xml is wrong"
+        }
+    }
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ea4e1b6c-37cf-420d-8493-e6575f8a5cdc" type="VALIDATION:EMPTY_COLLECTION">
+			<logger level="INFO" doc:name="Log_error_type" doc:id="073f445c-dd72-4a37-971b-d95b44f37d41" message="#[error.errorType]"/>
+			<ee:transform doc:name="Data_not_exist_in_db_message" doc:id="e90f72ba-7ca6-40cc-aea4-66b907f676a3" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+ns ns0 http://example.com/rocketservice
+---
+{
+    body: {
+        soap#Response: {
+            message: "This data does not exist in db"
+        }
+    }
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="5706ff99-f942-4013-bec1-6e802a187e21" type="DB:QUERY_EXECUTION">
+			<logger level="INFO" doc:name="Log_error_type" doc:id="72dcd3c5-f364-46b5-b18b-2970652a610c" message="#[error.errorType]"/>
+			<ee:transform doc:name="Transform Message" doc:id="3a29405e-b83a-4892-ae3f-65458419e889" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+ns ns0 http://example.com/rocketservice
+---
+{
+    body: {
+        soap#Response: {
+            message: "ExternalId has to be unique!"
+        }
+    }
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1aaa6fd0-2ffb-4f77-8564-0949b8c34e75" type="ANY">
+			<logger level="INFO" doc:name="Log_error_type" doc:id="736db78d-a660-4247-b798-723817f2e0d5" message="#[error.errorType]"/>
+			<ee:transform doc:name="Something_went_wrong_message" doc:id="66867d1f-9834-47ab-8bd5-6a8d4bb803ce">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+ns ns0 http://example.com/rocketservice
+---
+{
+    body: {
+        soap#Response: {
+            message: "Something went wrong"
+        }
+    }
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-continue>
+	</error-handler>
+</mule>

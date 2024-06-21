@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<munit:config name="test-de-requests.xml" />
+	<munit:test name="test-de-launchpad-correct-request" doc:id="4d41ad68-96b3-4eb0-b4fc-613ad8555c1a" >
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="api-main" />
+			<munit:enable-flow-source value="DeleteLaunchpadByExternalId:\soapkit-config" />
+			<munit:enable-flow-source value="deleteLaunchpad" />
+		</munit:enable-flow-sources>
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock_check_if_data_already_exists_in_db" doc:id="82eac4fc-6679-4de3-bbb2-5c368eabf0af" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="eb16e1cd-767a-4da4-8e25-694b734157bb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[{&#10;   name: "test_name_3",&#10;   locality: "test_locality_3",&#10;   externalId: "test_externalId_3",&#10;   id: 14,&#10;   region: "test_region_3",&#10;   status: "test_status_3"&#10;}]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock_de_launchpad_in_db" doc:id="dea580ae-a7f2-4d20-9f95-02d606c8c03f" processor="db:delete">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="9f09dca1-81a1-4abb-8059-986ccf5e9a98" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[[]]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="Prepair_input_xml" doc:id="62ef1746-aac6-47a8-995f-a7c8132a718f" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+ns roc http://example.com/rocketservice
+---
+{soapenv#Envelope:
+   {soapenv#Header: "",
+   soapenv#Body:
+      roc#DeleteLaunchpadByExternalIdRequest:
+         {externalId: "munit_externalId_1"}
+ }}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Request_to_api_main" doc:id="ce8ef0c4-f0c6-47c2-bba0-6757683348cb" config-ref="HTTP_Request_configuration_global" path="/SpaceXdbServiceSoapPort">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Transform_payload_to_java_object" doc:id="13ba087a-65cf-4488-9e86-3f84aa9d3492" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-equals doc:name="Assert_equals_de_message" doc:id="746c4b5c-83f1-42be-b584-3071ba8decbe" actual="#[payload.Envelope.Body.body.Result.message]" expected='#["Deleted successfully"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="test-de-launchpad-data-not-exists-in-db" doc:id="61c23d1e-7c45-4c81-ab29-683e5cbf5847" >
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="api-main" />
+			<munit:enable-flow-source value="DeleteLaunchpadByExternalId:\soapkit-config" />
+			<munit:enable-flow-source value="deleteLaunchpad" />
+		</munit:enable-flow-sources>
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock_check_if_data_already_exists_in_db" doc:id="09c18db9-a528-4d49-9f29-9954e946ebc8" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="eb16e1cd-767a-4da4-8e25-694b734157bb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[[]]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="Prepair_input_xml" doc:id="88e24ca3-8eac-43a9-ab13-89fb7c1135bc" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+ns roc http://example.com/rocketservice
+---
+{soapenv#Envelope:
+   {soapenv#Header: "",
+   soapenv#Body:
+      roc#DeleteLaunchpadByExternalIdRequest:
+         {externalId: "munit_externalId_1"}
+ }}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Request_to_api_main" doc:id="a67e4c2f-c680-4331-b3e6-2acd0425b8b5" config-ref="HTTP_Request_configuration_global" path="/SpaceXdbServiceSoapPort">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Transform_payload_to_java_object" doc:id="6cae2d8a-5f5f-4380-b9f6-ff7e02c09fc4" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-equals doc:name="Assert_equals_data_not_exist_in_db_message" doc:id="46592fb9-8174-44ce-94b9-519480e578ea" actual="#[payload.Envelope.Body.body.Response.message]" expected='#["This data does not exist in db"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="test-de-launch-data-not-exists-in-db" doc:id="b97f482b-8710-41b4-ae1b-40dba911bcd1" >
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="api-main" />
+			<munit:enable-flow-source value="DeleteLaunchByExternalId:\soapkit-config" />
+			<munit:enable-flow-source value="deleteLaunch" />
+		</munit:enable-flow-sources>
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock_check_if_data_already_exists_in_db" doc:id="b280ca4d-a7a0-471a-91b8-fa3d8274c287" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="12a438d6-de3b-4503-bc09-dc0ae6a87a13" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[[]]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="Prepair_input_xml" doc:id="f00c554e-0cb3-4918-a6aa-ce749df2232d" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+ns roc http://example.com/rocketservice
+---
+{soapenv#Envelope:
+   {soapenv#Header: "",
+   soapenv#Body:
+      roc#DeleteLaunchByExternalIdRequest:
+         {externalId: "munit_externalId_1"}
+ }}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Request_to_api_main" doc:id="671f12c4-2104-4369-8f27-e2ff9fe65492" config-ref="HTTP_Request_configuration_global" path="/SpaceXdbServiceSoapPort">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Transform_payload_to_java_object" doc:id="e2cb1f17-c5f2-47fd-abb0-91c7dfc5d521" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-equals doc:name="Assert_equals_data_not_exist_in_db_message" doc:id="8f9e8380-61a3-44f9-832a-4edb04135111" actual="#[payload.Envelope.Body.body.Response.message]" expected='#["This data does not exist in db"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="test-de-launch-correct-request" doc:id="3e0ffb3a-ccf0-47c5-832d-dedcb0170787" >
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="api-main" />
+			<munit:enable-flow-source value="DeleteLaunchByExternalId:\soapkit-config" />
+			<munit:enable-flow-source value="deleteLaunch" />
+		</munit:enable-flow-sources>
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock_check_if_data_already_exists_in_db" doc:id="52cc672e-af53-4f43-86b5-40d15633bc5d" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="12a438d6-de3b-4503-bc09-dc0ae6a87a13" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[[{date: "1000-01-01",&#10;rocketName: "test_rocketName_1",&#10;launchName: "test_launchNsme_1",&#10;success: false,&#10;launchpad_id: 1,&#10;externalId: "test_externalId_1",&#10;details: "test_details_1",&#10;id: 1}]]' mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock_de_launch_in_db" doc:id="2dfe6add-cb2b-46df-8549-90a9bd4dd594" processor="db:delete">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="03eb1874-6673-4108-8737-8baf041f25db" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[[]]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<ee:transform doc:name="Prepair_input_xml" doc:id="6bd87bfb-5938-416a-95ba-96914d9fc64c" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+ns roc http://example.com/rocketservice
+---
+{soapenv#Envelope:
+   {soapenv#Header: "",
+   soapenv#Body:
+      roc#DeleteLaunchByExternalIdRequest:
+         {externalId: "munit_externalId_1"}
+ }}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Request_to_api_main" doc:id="66863c0e-8a0c-47ed-9a5f-d9d78a7dbb62" config-ref="HTTP_Request_configuration_global" path="/SpaceXdbServiceSoapPort">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Transform_payload_to_java_object" doc:id="a580fe39-9624-44ad-985d-4d453d9b0585" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-equals doc:name="Assert_equals_de_message" doc:id="1a63cd27-6428-429b-97a3-cdcc42555610" actual="#[payload.Envelope.Body.body.Result.message]" expected='#["Deleted successfully"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="test-de-launch-empty-externalId" doc:id="ea71aa87-6d8b-4c9e-b382-d30cabe7e11d" >
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="api-main" />
+			<munit:enable-flow-source value="DeleteLaunchByExternalId:\soapkit-config" />
+			<munit:enable-flow-source value="deleteLaunch" />
+		</munit:enable-flow-sources>
+		<munit:execution >
+			<ee:transform doc:name="Prepair_input_xml" doc:id="ebf603be-91de-4c27-9803-73762d53883f" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+ns roc http://example.com/rocketservice
+---
+{soapenv#Envelope:
+   {soapenv#Header: "",
+   soapenv#Body:
+      roc#DeleteLaunchByExternalIdRequest:
+         {externalId: ""}
+ }}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Request_to_api_main" doc:id="6febac20-e489-41ab-97a1-4ece0782913f" config-ref="HTTP_Request_configuration_global" path="/SpaceXdbServiceSoapPort">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Transform_payload_to_java_object" doc:id="e280448a-37bc-4b0b-a1b0-eb2fa6ae1d47" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-equals doc:name="Assert_equals_externalId_is_required_message" doc:id="8eda18fe-fb27-4e8e-88cc-090a6e20e3a0" actual="#[payload.Envelope.Body.body.Response.message]" expected='#["ExternalId is required!!!"]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="test-de-launchpad-empty-externalId" doc:id="355c4dfa-fac3-4785-948d-a98504c86b5f" >
+		<munit:enable-flow-sources >
+			<munit:enable-flow-source value="api-main" />
+			<munit:enable-flow-source value="DeleteLaunchpadByExternalId:\soapkit-config" />
+			<munit:enable-flow-source value="deleteLaunchpad" />
+		</munit:enable-flow-sources>
+		<munit:execution >
+			<ee:transform doc:name="Prepair_input_xml" doc:id="5e1d7327-6441-40ef-97fa-9322e4462eec" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soapenv http://schemas.xmlsoap.org/soap/envelope/
+ns roc http://example.com/rocketservice
+---
+{soapenv#Envelope:
+   {soapenv#Header: "",
+   soapenv#Body:
+      roc#DeleteLaunchpadByExternalIdRequest:
+         {externalId: ""}
+ }}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<http:request method="POST" doc:name="Request_to_api_main" doc:id="1dcca329-3591-4c14-ad08-08d6264a486b" config-ref="HTTP_Request_configuration_global" path="/SpaceXdbServiceSoapPort">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+			</http:request>
+		</munit:execution>
+		<munit:validation >
+			<ee:transform doc:name="Transform_payload_to_java_object" doc:id="11ebdf72-a115-45c1-b29a-894a67405508" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<munit-tools:assert-equals doc:name="Assert_equals_externalId_is_required_message" doc:id="37c0b0a2-8e3d-4228-9d30-fbf85b2a3ce4" actual="#[payload.Envelope.Body.body.Response.message]" expected='#["ExternalId is required!!!"]'/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

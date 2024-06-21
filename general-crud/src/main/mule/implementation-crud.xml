@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xml-module="http://www.mulesoft.org/schema/mule/xml-module"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/xml-module http://www.mulesoft.org/schema/mule/xml-module/current/mule-xml-module.xsd">
+	<flow name="getLaunchpad" doc:id="76bae00d-24dd-44d9-97d9-2a82ef8ea3b8" >
+	<set-variable value="#[ns ns0 http://example.com/rocketservice&#10;---&#10;payload.body.ns0#GetLaunchpadByExternalIdRequest.externalId]" doc:name="Set_externalId_variable" doc:id="fe8157e6-2740-4f9c-8a4f-d8e4a3ad7d79" variableName="externalId"/>
+		<validation:is-not-null doc:name="Check_externalId_is_not_null" doc:id="0d3d504b-39d9-4a8c-ac3d-6ca8ff5a5458" value="#[vars.externalId]"/>
+	<db:select doc:name="Select_launchpad_by_externalId_from_db" doc:id="0db7aa15-e907-43de-b5aa-f8f67a9c9904" config-ref="Database_Config-global">
+			<db:sql><![CDATA[SELECT * FROM Launchpads
+WHERE externalId=:val]]></db:sql>
+			<db:input-parameters><![CDATA[#[{val: vars.externalId}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Prepair_launchpad_data_for_user" doc:id="fccdf18a-1069-41ce-bbbc-9bb8a289ecbb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope/
+ns ns0 http://example.com/rocketservice 
+---
+{
+    body: 
+    if (payload != null and sizeOf(payload) > 0)
+    {
+        soap#Response: {
+            result: (payload),
+            table: "launchpad"
+        }
+    }else {soap#Response: 
+         result: "There is not any matching data in db"}}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getLaunch" doc:id="b1cae35c-72c4-477f-a01d-eb4c3b453aeb" >
+	<set-variable value="#[ns ns0 http://example.com/rocketservice&#10;---&#10;payload.body.ns0#GetLaunchByExternalIdRequest.externalId]" doc:name="Set_externalId_variable" doc:id="b1f16adc-1a7e-4d41-b7cd-f3ef3c3b8187" variableName="externalId"/>
+		<validation:is-not-null doc:name="Check_externalId_is_not_null" doc:id="eeaac606-2094-4dde-b661-dac618ab88fb" value="#[vars.externalId]"/>
+		<db:select doc:name="Select_launch_by_externalId_from_db" doc:id="65e7763c-9874-41b7-9263-e5fe9d4d915c" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[SELECT * FROM Launches
+WHERE externalId=:val]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{val: vars.externalId}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Prepair_launch_data_for_user">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope/
+ns ns0 http://example.com/rocketservice 
+---
+{
+    body: 
+    if (payload != null and sizeOf(payload) > 0)
+    {
+        soap#Response: {
+            result: (payload),
+            table: "launch"
+        }
+    }else {soap#Response: 
+               result: "There is not any matching data in db"}
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+	</flow>
+	<flow name="createLauncpad" doc:id="c4468dad-a28f-4d52-9b64-2e61a4528b06" >
+		<ee:transform doc:name="Transform_java_object_payload_to_xml" doc:id="84d29b5f-9985-4e36-b7d2-40a50531f555" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="externalId" ><![CDATA[ns ns0 http://example.com/rocketservice
+---
+payload.body.ns0#CreateLaunchpadRequest.externalId]]></ee:set-variable>
+				<ee:set-variable variableName="dataXml" ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+root: payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<xml-module:validate-schema doc:name="Validate_schema_of_create_launchpad_input_xml" doc:id="2e4641a6-1351-442b-ba5e-eca0c6c1c786" config-ref="XML_Config" schemas="schemasCreateLaunchpad\schema0.xsd, schemasCreateLaunchpad\schema0.xsd">
+			<xml-module:content ><![CDATA[#[vars.dataXml]]]></xml-module:content>
+		</xml-module:validate-schema>
+		<db:insert doc:name="Create_launchpad_in_db" doc:id="beb228a4-5340-467e-b97d-0c701325dc0b" config-ref="Database_Config-global" autoGenerateKeys="true" autoGeneratedKeysColumnNames="#[['id']]">
+			<db:sql><![CDATA[INSERT INTO Launchpads (externalId, name, locality, region, status) 
+VALUES (:externalId, :name, :locality, :region, :status);]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+ns ns0 http://example.com/rocketservice
+---
+vars.dataXml.root.body.ns0#CreateLaunchpadRequest]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Successfull_create_message_for_user">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Result: {
+            message: "Created successfully"
+        }
+    }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+	</flow>
+	<flow name="createLaunch" doc:id="171e81c3-e3a1-4e6e-a5e5-e7109e6f7520" >
+	<ee:transform doc:name="Transform_java_object_payload_to_xml" doc:id="191ca471-12b3-4a8a-b07e-cc7c7155828f">
+            <ee:message>
+            </ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="dataXml" ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+root: payload]]></ee:set-variable>
+				<ee:set-variable variableName="externalId" ><![CDATA[ns ns0 http://example.com/rocketservice
+---
+payload.body.ns0#CreateLaunchRequest.externalId]]></ee:set-variable>
+			</ee:variables>
+        </ee:transform>
+		<xml-module:validate-schema doc:name="Validate_schema_of_create_launch_input_xml" doc:id="c23a066b-3d0b-4c68-a132-50ba17989546" config-ref="XML_Config" schemas="schemasCreateLaunch\schema0.xsd, schemasCreateLaunch\schema1.xsd">
+			<xml-module:content ><![CDATA[#[vars.dataXml]]]></xml-module:content>
+		</xml-module:validate-schema>
+		<db:insert doc:name="Create_launch_in_db" doc:id="0239911e-de9f-4468-a91a-f0fbcbd054b3" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[INSERT INTO Launches (externalId, success, details, launchName, date, rocketName) 
+VALUES (:externalId, :success, :details, :launchName, :date, :rocketName);]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+ns ns0 http://example.com/rocketservice
+---
+vars.dataXml.root.body.ns0#CreateLaunchRequest]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Successfull_create_message_for_user" doc:id="3e78e9fc-abef-43bd-b420-dddebee961e9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Result: {
+            message: "Created successfully"
+        }
+    }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updateLaunchpad" doc:id="7df0fd2f-267b-40a8-85c3-eac6d31ccd11" >
+	
+	<ee:transform doc:name="Transform_java_object_payload_to_xml" doc:id="c1acab63-2707-4c26-ac97-7d7870f63e08">
+            <ee:message>
+            </ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="dataXml" ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+root: payload]]></ee:set-variable>
+				<ee:set-variable variableName="externalId" ><![CDATA[ns ns0 http://example.com/rocketservice
+---
+payload.body.ns0#UpdateLaunchpadRequest.externalId]]></ee:set-variable>
+			</ee:variables>
+        </ee:transform>
+		<xml-module:validate-schema doc:name="Validate_schema_of_update_launchpad_input_xml" doc:id="be0c6e74-e1c1-4bcc-84a4-c008f47b6f2a" config-ref="XML_Config" schemas="schemasUpdateLaunchpad\schema0.xsd, schemasUpdateLaunchpad\schema0.xsd">
+			<xml-module:content ><![CDATA[#[vars.dataXml]]]></xml-module:content>
+		</xml-module:validate-schema>
+		<db:select doc:name="Check_if_input_externalId_exists_in_db" doc:id="b7652330-9350-4920-a231-e1350d1f71de" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[SELECT * FROM Launchpads
+WHERE externalId=:val;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{val: vars.externalId}]]]></db:input-parameters>
+		</db:select>
+		<validation:is-not-empty-collection doc:name="Check_payload_from_db_is_empty_collection" doc:id="7d904cfa-0534-42d4-8846-82a985f83fff" />
+		<db:update doc:name="Update_launchpad_in_db" doc:id="8813f734-996e-4975-bcff-47dc178a900a" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[UPDATE Launchpads
+SET name = :name, locality = :locality, region = :region, status = :status
+WHERE externalId=:externalId;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+ns ns0 http://example.com/rocketservice
+---
+vars.dataXml.root.body.ns0#UpdateLaunchpadRequest]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Successfull_update_message_for_user" doc:id="b8c0ec41-24f4-443f-a172-36b54d27364a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Result: {
+            message: "Updated successfully"
+        }
+    }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updateLaunch" doc:id="416a0d3f-637c-46ce-8f97-bc05f66214d3" >
+	
+	<ee:transform doc:name="Transform_java_object_payload_to_xml" doc:id="179b7ffe-369a-4bf4-84cc-9477f5e8e698">
+            <ee:message>
+            </ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="dataXml" ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+root: payload]]></ee:set-variable>
+				<ee:set-variable variableName="externalId" ><![CDATA[ns ns0 http://example.com/rocketservice
+---
+payload.body.ns0#UpdateLaunchRequest.externalId]]></ee:set-variable>
+			</ee:variables>
+        </ee:transform>
+		<xml-module:validate-schema doc:name="Validate_schema_of_update_launch_input_xml" doc:id="9c196d58-30db-43cc-8180-99e6bad7ff5a" schemas="schemasUpdateLaunch\schema0.xsd, schemasUpdateLaunch\schema0.xsd" config-ref="XML_Config">
+			<xml-module:content ><![CDATA[#[vars.dataXml]]]></xml-module:content>
+		</xml-module:validate-schema>
+		<db:select doc:name="Check_if_input_externalId_exists_in_db" doc:id="d1075656-43f0-482b-817f-4b9f559b3b81" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[SELECT * FROM Launches
+WHERE externalId=:val;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{val: vars.externalId}]]]></db:input-parameters>
+		</db:select>
+		<validation:is-not-empty-collection doc:name="Check_payload_from_db_is_empty_collection" doc:id="7b753809-2611-484f-863f-1d7d0ccb5a3d" />
+		<db:update doc:name="Update_launch_in_db" doc:id="8fd00816-7b61-497a-a1e9-0f1398a1b4d2" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[UPDATE Launches
+SET success = :success, details = :details, launchName = :launchName, date = :date, rocketName = :rocketName
+WHERE externalId=:externalId;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+ns ns0 http://example.com/rocketservice
+---
+vars.dataXml.root.body.ns0#UpdateLaunchRequest]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Successfull_update_message_for_user" doc:id="df37da32-a397-4431-b762-23eb9b3346fe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Result: {
+            message: "Updated successfully"
+        }
+    }
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="deleteLaunchpad" doc:id="6351e9c0-d8aa-4c88-b7f7-c7d21b928ee2" >
+	<set-variable value="#[ns ns0 http://example.com/rocketservice&#10;---&#10;payload.body.ns0#DeleteLaunchpadByExternalIdRequest.externalId]" doc:name="Set_externalId_variable" doc:id="fe233f17-626d-4a43-9593-11d26676dc17" variableName="externalId"/>
+		<validation:is-not-null doc:name="Check_externalId_is_not_null" doc:id="4979bd3c-75d6-4259-8bdf-0af37d828dfe" value="#[vars.externalId]"/>
+		<db:select doc:name="Check_if_input_externalId_exists_in_db" doc:id="eb16e1cd-767a-4da4-8e25-694b734157bb" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[SELECT * FROM Launchpads
+WHERE externalId=:val;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{val: vars.externalId}]]]></db:input-parameters>
+		</db:select>
+		<validation:is-not-empty-collection doc:name="Check_payload_from_db_is_empty_collection" doc:id="ed5e9d6c-91fe-4e4d-a584-b316c1f3f056" />
+		<db:delete doc:name="Delete_launchpad_by_externalId_from_db" doc:id="9f09dca1-81a1-4abb-8059-986ccf5e9a98" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[DELETE FROM Launchpads 
+WHERE externalId=:val;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{val: vars.externalId}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Successfull_delete_message_for_user">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Result: {
+            message: "Deleted successfully"
+        }
+    }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+	</flow>
+	<flow name="deleteLaunch" doc:id="5be923bc-4d69-4783-96d1-34e2a47036d8" >
+	<set-variable value="#[ns ns0 http://example.com/rocketservice&#10;---&#10;payload.body.ns0#DeleteLaunchByExternalIdRequest.externalId]" doc:name="Set_externalId_variable" doc:id="8a7fa416-e001-4319-a859-4e88b81b099e" variableName="externalId"/>
+		<validation:is-not-null doc:name="Check_externalId_is_not_null" doc:id="3c990708-ef56-47fa-ad8d-0c33ac492800" value="#[vars.externalId]"/>
+		<db:select doc:name="Check_if_input_externalId_exists_in_db" doc:id="12a438d6-de3b-4503-bc09-dc0ae6a87a13" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[SELECT * FROM Launches
+WHERE externalId=:val;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{val: vars.externalId}]]]></db:input-parameters>
+		</db:select>
+		<validation:is-not-empty-collection doc:name="Check_payload_from_db_is_empty_collection" doc:id="d8cd2336-9fd3-41c8-9f9a-1cae5419db8e" />
+		<db:delete doc:name="Delete_launch_by_externalId_from_db" doc:id="03eb1874-6673-4108-8737-8baf041f25db" config-ref="Database_Config-global">
+			<db:sql ><![CDATA[DELETE FROM Launches 
+WHERE externalId=:val;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{val: vars.externalId}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Successfull_delete_message_for_user">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+ns soap http://schemas.xmlsoap.org/soap/envelope
+---
+{
+    body: {
+        soap#Result: {
+            message: "Deleted successfully"
+        }
+    }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+	</flow>
+</mule>

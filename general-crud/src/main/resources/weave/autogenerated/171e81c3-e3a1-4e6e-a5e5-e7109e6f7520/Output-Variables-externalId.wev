@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_171e81c3_e3a1_4e6e_a5e5_e7109e6f7520_Output_Variables_externalId = Any
+

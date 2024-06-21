@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit-soap="http://www.mulesoft.org/schema/mule/apikit-soap"
+	xmlns:xml-module="http://www.mulesoft.org/schema/mule/xml-module"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/xml-module http://www.mulesoft.org/schema/mule/xml-module/current/mule-xml-module.xsd
+http://www.mulesoft.org/schema/mule/apikit-soap http://www.mulesoft.org/schema/mule/apikit-soap/current/mule-apikit-soap.xsd">
+	<http:listener-config name="api-httpListenerConfig-global">
+        <http:listener-connection host="${secure::http.host}" port="${secure::http.port}" readTimeout="200000"/>
+    </http:listener-config>
+    
+    <db:config name="Database_Config-global" doc:name="Database Config" doc:id="c1bde1bc-447d-4000-bcf9-6e783530759d" >
+		<db:my-sql-connection host="${secure::db.host}" port="${secure::db.port}" user="${secure::db.user}" password="${secure::db.password}" database="${secure::db.database}">
+		<db:connection-properties >
+            <db:connection-property key="useSSL" value="false" />
+        </db:connection-properties>
+    </db:my-sql-connection>
+	</db:config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="5bfb30ec-8108-4d59-83b4-94587de4b719" file="config/${mule_env}-out.yaml" key="${secretKey}"/>
+	<configuration doc:name="Configuration" doc:id="2e0fe38e-d87b-4aa9-bcc3-21fa3f577416" defaultErrorHandler-ref="global-error-handlerError_Handler" />
+	<xml-module:config name="XML_Config" doc:name="XML Config" doc:id="ed105a5d-d7d7-4544-aa6f-89f7e22dcc64" expandEntities="INTERNAL"/>
+	<http:request-config name="HTTP_Request_configuration_global" doc:name="HTTP Request configuration" doc:id="241a2297-595b-4109-8ac6-056497132355" basePath="/SpaceXdbService">
+		<http:request-connection host="${secure::http.host}" port="${secure::http.port}" connectionIdleTimeout="200000" />
+	</http:request-config>
+	<apikit-soap:config name="soapkit-config" service="SpaceXdbService" doc:name="APIKit for SOAP Configuration" doc:id="bda0376d-a1a3-453e-ba6f-613ad39fbb89" wsdlLocation="api\general_crud.wsdl" port="SpaceXdbServiceSoapPort"/>
+	
+</mule>
